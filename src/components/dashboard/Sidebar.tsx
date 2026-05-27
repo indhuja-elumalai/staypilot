@@ -20,7 +20,7 @@ export function Sidebar() {
   const path = useRouterState({ select: s => s.location.pathname });
 
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border h-screen">
       <div className="h-16 px-5 flex items-center gap-2 border-b border-sidebar-border">
         <div className="h-8 w-8 rounded-lg bg-sidebar-accent grid place-items-center">
           <BedDouble className="h-4 w-4 text-primary" />
@@ -55,12 +55,11 @@ export function Sidebar() {
         <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/60">
           <LifeBuoy className="h-4 w-4" /> Help & support
         </Link>
-        <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/60">
-          <Settings className="h-4 w-4" /> Settings
+        <Link to="/dashboard/settings" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/60">
+          <Settings className="h-4 w-4" /> Template & Settings
         </Link>
       </div>
 
-      {/* Logout */}
       <div className="p-3 border-t border-sidebar-border">
         <SignOutButton redirectUrl="/">
           <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:text-red-400 hover:bg-sidebar-accent/60 transition">
@@ -69,8 +68,7 @@ export function Sidebar() {
         </SignOutButton>
       </div>
 
-      {/* Dynamic User Profile */}
-      <div className="p-3 mt-auto">
+      <div className="p-3 mt-auto border-t border-sidebar-border">
         <div className="flex items-center gap-3 rounded-lg px-3 py-2 bg-sidebar-accent/40">
           <div className="h-8 w-8 rounded-full bg-primary/20 grid place-items-center text-xs font-semibold text-primary">
             {isLoaded ? user?.firstName?.charAt(0) : "..."}
