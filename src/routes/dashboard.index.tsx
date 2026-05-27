@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Topbar } from "@/components/dashboard/Topbar";
+import { useUser } from "@clerk/clerk-react"; // Import Clerk hook
 import { ArrowUpRight, ArrowDownRight, BedDouble, Users, Wallet, TrendingUp } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -7,6 +8,14 @@ export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "Overview · StayPilot" }] }),
   component: Overview,
 });
+
+// Helper function for the greeting
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+};
 
 const revenue = [
   { d: "Mon", v: 32000 }, { d: "Tue", v: 41200 }, { d: "Wed", v: 38500 },
@@ -32,9 +41,16 @@ function Kpi({ icon: Icon, label, value, delta, up }: any) {
 }
 
 function Overview() {
+  const { user } = useUser();
+  const greeting = getGreeting();
+  const name = user?.firstName || "Guest";
+
   return (
     <>
-      <Topbar title="Good evening, Riya" subtitle="Here's what's happening at Coastline Residency tonight." />
+      <Topbar
+        title={`${greeting}, ${name}`}
+        subtitle="Here is a summary of your property's performance and live activity."
+      />
       <div className="p-6 lg:p-8 space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Kpi icon={Wallet} label="Revenue this week" value="₹3,72,300" delta="+12.4%" up />
@@ -51,8 +67,8 @@ function Overview() {
                 <div className="text-xs text-muted-foreground">Last 7 days</div>
               </div>
               <div className="flex gap-1 text-xs">
-                {["7D","30D","90D"].map((t,i) => (
-                  <button key={t} className={`px-2.5 py-1 rounded-md ${i===0 ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`}>{t}</button>
+                {["7D", "30D", "90D"].map((t, i) => (
+                  <button key={t} className={`px-2.5 py-1 rounded-md ${i === 0 ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`}>{t}</button>
                 ))}
               </div>
             </div>
@@ -61,14 +77,14 @@ function Overview() {
                 <AreaChart data={revenue} margin={{ left: -20, right: 8, top: 8 }}>
                   <defs>
                     <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="var(--ember)" stopOpacity={0.5}/>
-                      <stop offset="100%" stopColor="var(--ember)" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="var(--ember)" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="var(--ember)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="d" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false}/>
-                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false}/>
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}/>
+                  <XAxis dataKey="d" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} />
                   <Area dataKey="v" stroke="var(--ember)" strokeWidth={2} fill="url(#g)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -82,10 +98,10 @@ function Overview() {
               <ResponsiveContainer>
                 <BarChart data={channels} margin={{ left: -20, right: 8, top: 8 }}>
                   <CartesianGrid stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="c" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false}/>
-                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false}/>
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}/>
-                  <Bar dataKey="v" fill="var(--navy)" radius={[6,6,0,0]} />
+                  <XAxis dataKey="c" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} />
+                  <Bar dataKey="v" fill="var(--navy)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -110,14 +126,14 @@ function Overview() {
               </thead>
               <tbody>
                 {[
-                  ["Aarav Mehta","Suite 204","Tonight → 12 Nov","₹14,200","Confirmed"],
-                  ["Sofia Romero","Deluxe 118","Tonight → 15 Nov","₹38,500","Checked-in"],
-                  ["Yuki Tanaka","Garden 02","Tonight → 11 Nov","₹6,800","Pending"],
-                  ["Idris Khan","Suite 301","Tonight → 13 Nov","₹22,400","Confirmed"],
-                ].map(([n,r,s,a,st]) => (
+                  ["Aarav Mehta", "Suite 204", "Tonight → 12 Nov", "₹14,200", "Confirmed"],
+                  ["Sofia Romero", "Deluxe 118", "Tonight → 15 Nov", "₹38,500", "Checked-in"],
+                  ["Yuki Tanaka", "Garden 02", "Tonight → 11 Nov", "₹6,800", "Pending"],
+                  ["Idris Khan", "Suite 301", "Tonight → 13 Nov", "₹22,400", "Confirmed"],
+                ].map(([n, r, s, a, st]) => (
                   <tr key={n} className="border-b border-border last:border-0 hover:bg-muted/40">
                     <td className="px-5 py-3 flex items-center gap-3">
-                      <div className="h-7 w-7 rounded-full bg-muted grid place-items-center text-[11px] font-medium">{n.split(" ").map(x=>x[0]).join("")}</div>
+                      <div className="h-7 w-7 rounded-full bg-muted grid place-items-center text-[11px] font-medium">{n.split(" ").map(x => x[0]).join("")}</div>
                       <span className="font-medium">{n}</span>
                     </td>
                     <td className="py-3 text-muted-foreground">{r}</td>
@@ -140,13 +156,12 @@ function Overview() {
                 ["Pending payments", "₹38,400", "warning"],
                 ["WhatsApp sent", "26", "info"],
                 ["Walk-ins", "3", "info"],
-              ].map(([k,v,c]) => (
+              ].map(([k, v, c]) => (
                 <li key={k as string} className="flex items-center justify-between">
                   <span className="text-muted-foreground">{k}</span>
-                  <span className={`text-xs font-medium px-2 py-1 rounded-md ${
-                    c==="success" ? "bg-success/10 text-success" :
-                    c==="warning" ? "bg-warning/10 text-warning" : "bg-info/10 text-info"
-                  }`}>{v}</span>
+                  <span className={`text-xs font-medium px-2 py-1 rounded-md ${c === "success" ? "bg-success/10 text-success" :
+                    c === "warning" ? "bg-warning/10 text-warning" : "bg-info/10 text-info"
+                    }`}>{v}</span>
                 </li>
               ))}
             </ul>
@@ -158,7 +173,7 @@ function Overview() {
 }
 
 export function StatusPill({ v }: { v: string }) {
-  const map: Record<string,string> = {
+  const map: Record<string, string> = {
     Confirmed: "bg-primary/10 text-primary",
     "Checked-in": "bg-success/10 text-success",
     Pending: "bg-warning/10 text-warning",

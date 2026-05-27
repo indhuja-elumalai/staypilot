@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BedDouble, BarChart3, Users, Wallet, MessageCircle, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,10 +33,24 @@ function Landing() {
             <a href="#pricing" className="hover:text-foreground transition">Pricing</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild><Link to="/dashboard">Sign in</Link></Button>
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow" asChild>
-              <Link to="/dashboard">Open dashboard <ArrowRight className="h-4 w-4 ml-1" /></Link>
-            </Button>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <Button variant="ghost" size="sm">Sign in</Button>
+              </SignInButton>
+              <SignInButton mode="modal">
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow">
+                  Join now <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </SignInButton>
+            </SignedOut>
+
+            <SignedIn>
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
+              {/* Optional: Adds the Clerk user profile circle */}
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
           </div>
         </div>
       </header>
@@ -55,9 +70,20 @@ function Landing() {
               StayPilot replaces six spreadsheets and three apps. Bookings, guests, expenses and operations — one dashboard your front desk will actually love.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow" asChild>
-                <Link to="/dashboard">Launch dashboard <ArrowRight className="h-4 w-4 ml-1" /></Link>
-              </Button>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow">
+                    Launch dashboard <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </SignInButton>
+              </SignedOut>
+
+              <SignedIn>
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow" asChild>
+                  <Link to="/dashboard">Go to dashboard <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                </Button>
+              </SignedIn>
+
               <Button size="lg" variant="outline">Book a 10-min demo</Button>
             </div>
             <div className="mt-8 flex items-center gap-6 text-xs text-muted-foreground">
@@ -102,12 +128,12 @@ function Landing() {
                     ].map(([n, r, d, s]) => (
                       <div key={n} className="px-4 h-12 flex items-center justify-between text-sm border-b border-border last:border-0">
                         <div className="flex items-center gap-3">
-                          <div className="h-7 w-7 rounded-full bg-muted grid place-items-center text-[11px] font-medium">{n.split(" ").map(x=>x[0]).join("")}</div>
+                          <div className="h-7 w-7 rounded-full bg-muted grid place-items-center text-[11px] font-medium">{n.split(" ").map(x => x[0]).join("")}</div>
                           <span className="font-medium">{n}</span>
                         </div>
                         <span className="text-muted-foreground">{r}</span>
                         <span className="text-muted-foreground">{d}</span>
-                        <span className={`text-xs px-2 py-1 rounded-md ${s==="Confirmed"?"bg-primary/10 text-primary":s==="Checked-in"?"bg-success/10 text-success":"bg-warning/10 text-warning"}`}>{s}</span>
+                        <span className={`text-xs px-2 py-1 rounded-md ${s === "Confirmed" ? "bg-primary/10 text-primary" : s === "Checked-in" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>{s}</span>
                       </div>
                     ))}
                   </div>
@@ -151,7 +177,7 @@ function Landing() {
             <ol className="mt-8 space-y-4">
               {steps.map((s, i) => (
                 <li key={s.title} className="flex gap-4">
-                  <div className="h-8 w-8 rounded-full bg-navy text-primary grid place-items-center text-sm font-semibold shrink-0">{i+1}</div>
+                  <div className="h-8 w-8 rounded-full bg-navy text-primary grid place-items-center text-sm font-semibold shrink-0">{i + 1}</div>
                   <div>
                     <div className="font-medium">{s.title}</div>
                     <div className="text-sm text-muted-foreground">{s.desc}</div>
@@ -169,7 +195,7 @@ function Landing() {
                 ["Pending payments", "₹38,400"],
                 ["Complaints open", "2"],
                 ["Tasks done today", "18"],
-              ].map(([k,v]) => (
+              ].map(([k, v]) => (
                 <div key={k} className="rounded-lg bg-white/5 border border-white/10 p-4">
                   <div className="text-white/60 text-xs">{k}</div>
                   <div className="mt-1 font-medium">{v}</div>
@@ -186,9 +212,11 @@ function Landing() {
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Run your property on autopilot.</h2>
           <p className="mt-3 text-muted-foreground">Free for the first 30 days. No credit card. Cancel anytime.</p>
           <div className="mt-8 flex justify-center gap-3">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow" asChild>
-              <Link to="/dashboard">Open the dashboard <ArrowRight className="h-4 w-4 ml-1" /></Link>
-            </Button>
+            <SignInButton mode="modal">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow">
+                Open the dashboard <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </SignInButton>
             <Button size="lg" variant="outline">Talk to sales</Button>
           </div>
         </div>
