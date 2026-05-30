@@ -89,7 +89,7 @@ function Bookings() {
       return today >= start && today <= end;
   });
   
-  const totalRevenueToday = todaysBookings.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+  const totalRevenueToday = todaysBookings.reduce((sum, b) => sum + Number(b.amountForProperty || b.amount || 0), 0);
   
   // Calculate booked room numbers for today
   const bookedRoomNos = new Set<string>();
@@ -178,10 +178,7 @@ function Bookings() {
                 const roomCount = Array.isArray(b.rooms) ? b.rooms.length : 1;
                 const roomNos = Array.isArray(b.rooms) ? b.rooms.map((r: any) => r.roomNo).join(", ") : b.roomNo;
                 const nights = calculateNights(b.checkIn, b.checkOut);
-                const roomPriceSum = Array.isArray(b.rooms) 
-                    ? b.rooms.reduce((sum: number, r: any) => sum + (Number(r.price) || 0), 0)
-                    : Number(b.amount || 0);
-                const finalAmount = b.rooms ? roomPriceSum * nights : b.amount;
+                const finalAmount = b.amountForProperty !== undefined ? b.amountForProperty : b.amount;
                 
                 return (
                 <tr key={b._id} className="border-t hover:bg-muted/20 group">

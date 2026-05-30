@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, AlertCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSave?: () => void, bookingToEdit?: any, onOpenChange?: (o: boolean) => void }) {
     const { getToken } = useAuth(); 
@@ -12,7 +13,8 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
     const initialForm = {
         name: "", phone: "", email: "", houseNo: "", street: "",
         landmark: "", city: "", state: "", pincode: "", country: "India",
-        checkIn: "", checkOut: ""
+        landmark: "", city: "", state: "", pincode: "", country: "India",
+        checkIn: "", checkOut: "", bookingSource: "Direct", platformName: ""
     };
     
     const [f, setF] = useState(initialForm);
@@ -24,6 +26,8 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
     
     const [matchCustomer, setMatchCustomer] = useState<any>(null);
     const [errorMsg, setErrorMsg] = useState("");
+    const [overrideCustAmount, setOverrideCustAmount] = useState<string>("");
+    const [overridePropAmount, setOverridePropAmount] = useState<string>("");
 
     // Load from localStorage on mount (only for new bookings)
     useEffect(() => {
@@ -59,8 +63,18 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
                 pincode: bookingToEdit.pincode || "",
                 country: bookingToEdit.country || "India",
                 checkIn: bookingToEdit.checkIn ? new Date(new Date(bookingToEdit.checkIn).getTime() - new Date(bookingToEdit.checkIn).getTimezoneOffset() * 60000).toISOString().slice(0,16) : "",
-                checkOut: bookingToEdit.checkOut ? new Date(new Date(bookingToEdit.checkOut).getTime() - new Date(bookingToEdit.checkOut).getTimezoneOffset() * 60000).toISOString().slice(0,16) : ""
+                country: bookingToEdit.country || "India",
+                checkIn: bookingToEdit.checkIn ? new Date(new Date(bookingToEdit.checkIn).getTime() - new Date(bookingToEdit.checkIn).getTimezoneOffset() * 60000).toISOString().slice(0,16) : "",
+                checkOut: bookingToEdit.checkOut ? new Date(new Date(bookingToEdit.checkOut).getTime() - new Date(bookingToEdit.checkOut).getTimezoneOffset() * 60000).toISOString().slice(0,16) : "",
+                bookingSource: bookingToEdit.bookingSource || "Direct",
+                platformName: bookingToEdit.platformName || ""
             });
+            if (bookingToEdit.amountForCustomer !== undefined) setOverrideCustAmount(String(bookingToEdit.amountForCustomer));
+            if (bookingToEdit.amountForProperty !== undefined) setOverridePropAmount(String(bookingToEdit.amountForProperty));
+            else if (bookingToEdit.amount !== undefined) {
+                setOverrideCustAmount(String(bookingToEdit.amount));
+                setOverridePropAmount(String(bookingToEdit.amount));
+            }
             if (Array.isArray(bookingToEdit.rooms)) {
                 setRooms(bookingToEdit.rooms);
             } else {
@@ -202,7 +216,9 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
         // but also send the full rooms array
         const bookingData = {
             ...f,
-            amount: totalAmount,
+            amount: overridePropAmount !== "" ? Number(overridePropAmount) : totalAmount,
+            amountForProperty: overridePropAmount !== "" ? Number(overridePropAmount) : totalAmount,
+            amountForCustomer: overrideCustAmount !== "" ? Number(overrideCustAmount) : totalAmount,
             roomNo: rooms.map(r => r.roomNo).join(", "),
             rooms: rooms
         };
@@ -224,6 +240,8 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
             setRooms([{ roomNo: "", roomType: "", price: 0 }]);
             localStorage.removeItem("draftBookingForm");
             localStorage.removeItem("draftBookingRooms");
+            setOverrideCustAmount("");
+            setOverridePropAmount("");
             
             setOpen(false); // Close modal
             if (onOpenChange) onOpenChange(false);
@@ -243,6 +261,8 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
             if(!o) {
                 setF(initialForm);
                 setRooms([{ roomNo: "", roomType: "", price: 0 }]);
+                setOverrideCustAmount("");
+                setOverridePropAmount("");
             }
         }}>
             <DialogTrigger asChild>
@@ -274,6 +294,25 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
                     />
                     <Input placeholder="Email Address (Optional)" type="email" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} className="col-span-2" />
                     
+                    <div className="col-span-2 flex gap-4 mt-2">
+                        <div className="flex-1">
+                            <Select value={f.bookingSource} onValueChange={v => setF({ ...f, bookingSource: v })}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Booking Source" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Direct">Direct Booking</SelectItem>
+                                    <SelectItem value="Online">Online / OTA</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {f.bookingSource === "Online" && (
+                            <div className="flex-1">
+                                <Input placeholder="Platform Name (e.g. MakeMyTrip, Agoda)" required value={f.platformName} onChange={e => setF({ ...f, platformName: e.target.value })} />
+                            </div>
+                        )}
+                    </div>
+
                     <div className="col-span-2 space-y-3 p-4 bg-muted/30 border border-border rounded-lg mt-2">
                         <div className="flex items-center justify-between">
                             <h4 className="text-sm font-semibold">Room Details</h4>
@@ -293,8 +332,18 @@ export function NewBookingModal({ onSave, bookingToEdit, onOpenChange }: { onSav
                         ))}
                         <div className="text-right pt-2 border-t border-border mt-2 text-sm">
                             <span className="text-muted-foreground mr-4">{nights} {nights === 1 ? 'Night' : 'Nights'}</span>
-                            <span className="font-semibold text-muted-foreground mr-2">Total Amount:</span>
-                            <span className="text-lg font-bold text-primary">₹{totalAmount}</span>
+                            <span className="font-semibold text-muted-foreground mr-2">Rooms Total:</span>
+                            <span className="text-lg font-bold text-primary mr-4">₹{totalAmount}</span>
+                        </div>
+                        <div className="flex gap-4 pt-2">
+                            <div className="flex-1">
+                                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Amount for Customer (Invoice)</label>
+                                <Input type="number" placeholder={`Default: ₹${totalAmount}`} value={overrideCustAmount} onChange={e => setOverrideCustAmount(e.target.value)} />
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Amount for Property (Net Revenue)</label>
+                                <Input type="number" placeholder={`Default: ₹${totalAmount}`} value={overridePropAmount} onChange={e => setOverridePropAmount(e.target.value)} />
+                            </div>
                         </div>
                     </div>
                     

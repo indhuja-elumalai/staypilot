@@ -27,9 +27,9 @@ export function EditableInvoiceModal({ booking, open, onOpenChange }: { booking:
             const nights = booking.checkOut && booking.checkIn ? Math.floor(Math.abs(new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / (1000 * 60 * 60 * 24)) : 1;
             const roomsArray = Array.isArray(booking.rooms) ? [...booking.rooms] : [{ roomNo: booking.roomNo, roomType: "Standard", price: booking.amount }];
             
-            const initialAmount = Array.isArray(booking.rooms)
+            const initialAmount = booking.amountForCustomer !== undefined ? booking.amountForCustomer : (Array.isArray(booking.rooms)
                 ? roomsArray.reduce((sum: number, r: any) => sum + (Number(r.price) || 0), 0) * nights
-                : booking.amount;
+                : booking.amount);
 
             setEdited({ 
                 ...booking, 

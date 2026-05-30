@@ -57,7 +57,13 @@ router.post('/', async (req: any, res: any) => {
         if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
         const db = getDb();
-        const newBooking = { ...req.body, userId, createdAt: new Date() };
+        const newBooking = { 
+            ...req.body, 
+            userId, 
+            createdAt: new Date(),
+            amountForProperty: req.body.amountForProperty ?? req.body.amount,
+            amountForCustomer: req.body.amountForCustomer ?? req.body.amount,
+        };
         const result = await db.collection("bookings").insertOne(newBooking);
 
         // Auto-add or update customer
@@ -110,6 +116,14 @@ router.put('/:id', async (req: any, res: any) => {
         
         // Exclude _id and userId from the update body
         const { _id, userId: reqUserId, ...updateData } = req.body;
+        
+        // Backward compatibility
+        if (updateData.amountForProperty === undefined && updateData.amount !== undefined) {
+            updateData.amountForProperty = updateData.amount;
+        }
+        if (updateData.amountForCustomer === undefined && updateData.amount !== undefined) {
+            updateData.amountForCustomer = updateData.amount;
+        }
         
         await db.collection("bookings").updateOne(
             { _id: new ObjectId(id), userId },

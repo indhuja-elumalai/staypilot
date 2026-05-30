@@ -41,9 +41,9 @@ export function DigitalInvoiceModal({ booking, open, onOpenChange }: { booking: 
     const nights = Math.floor(Math.abs(new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / (1000 * 60 * 60 * 24));
     
     // For old bookings without rooms array, the amount is already the final amount
-    const finalAmount = Array.isArray(booking.rooms) 
+    const finalAmount = booking.amountForCustomer !== undefined ? booking.amountForCustomer : (Array.isArray(booking.rooms) 
         ? rooms.reduce((sum: number, r: any) => sum + (Number(r.price) || 0), 0) * nights
-        : booking.amount;
+        : booking.amount);
 
     const handleDownloadPDF = () => {
         const content = document.getElementById('printable-digital-invoice');

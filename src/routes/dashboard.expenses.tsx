@@ -1,79 +1,225 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { Topbar } from "@/components/dashboard/Topbar";
-import { Plus, TrendingDown, TrendingUp } from "lucide-react";
+import { Plus, TrendingDown, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { API_URL, getAuthHeaders } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/expenses")({
   head: () => ({ meta: [{ title: "Expenses · StayPilot" }] }),
   component: Expenses,
 });
 
-const ledger = [
-  ["10 Nov","Linen laundry — Spotless Co.","Operations","₹4,200","out"],
-  ["10 Nov","Daily groceries — kitchen","F&B","₹6,840","out"],
-  ["09 Nov","Front-desk salary — Rohan","Payroll","₹28,000","out"],
-  ["09 Nov","Booking revenue — Sofia Romero","Revenue","₹38,500","in"],
-  ["08 Nov","Diesel — generator","Utilities","₹3,100","out"],
-  ["08 Nov","Plumber — Suite 204","Maintenance","₹1,800","out"],
-  ["07 Nov","Booking revenue — Aarav Mehta","Revenue","₹14,200","in"],
-];
+function LogExpenseModal({ onSave }: { onSave: () => void }) {
+    const { getToken } = useAuth();
+    const [open, setOpen] = useState(false);
+    const [f, setF] = useState({ type: "Bank", category: "Deduction", amount: "", description: "", date: new Date().toISOString().split('T')[0] });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const headers = await getAuthHeaders(getToken);
+            const res = await fetch(`${API_URL}/expenses`, {
+                method: "POST",
+                headers: { ...headers, "Content-Type": "application/json" },
+                body: JSON.stringify({ ...f, amount: Number(f.amount) })
+            });
+            if (res.ok) {
+                setF({ type: "Bank", category: "Deduction", amount: "", description: "", date: new Date().toISOString().split('T')[0] });
+                setOpen(false);
+                onSave();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow"><Plus className="h-4 w-4 mr-1" /> Log Entry</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Log Ledger Entry</DialogTitle>
+                    <DialogDescription>Add a new expense or deposit to your ledger.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                    <Select value={f.type} onValueChange={(v) => setF({...f, type: v, category: v !== "Bank" ? "Deduction" : "Deduction"})}>
+                        <SelectTrigger><SelectValue placeholder="Ledger Type" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Bank">Expense Bank (Daily Add-ons/Deductions)</SelectItem>
+                            <SelectItem value="General">General Expenses (One-off)</SelectItem>
+                            <SelectItem value="Monthly">Monthly Fixed (Salary, Rent, Utilities)</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {f.type === "Bank" && (
+                        <Select value={f.category} onValueChange={(v) => setF({...f, category: v})}>
+                            <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Deduction">Deduction (-)</SelectItem>
+                                <SelectItem value="Deposit">Add-on Deposit (+)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input type="date" required value={f.date} onChange={e => setF({...f, date: e.target.value})} />
+                        <Input required placeholder="Description (e.g. Milk)" value={f.description} onChange={e => setF({...f, description: e.target.value})} />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                        <span className="text-xl font-bold">₹</span>
+                        <Input required type="number" placeholder="Amount" value={f.amount} onChange={e => setF({...f, amount: e.target.value})} className="text-lg" />
+                    </div>
+
+                    <Button type="submit" className="w-full mt-4">Save Entry</Button>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 function Expenses() {
-  return (
-    <>
-      <Topbar
-        title="Expenses & Ledger"
-        subtitle="Daily costs, payroll and revenue in one timeline"
-        action={<Button className="bg-primary hover:bg-primary/90 text-primary-foreground ember-glow"><Plus className="h-4 w-4 mr-1" /> Log expense</Button>}
-      />
-      <div className="p-6 lg:p-8 space-y-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            ["Spent (Nov)","₹1,84,300","-12%","down"],
-            ["Earned (Nov)","₹4,62,800","+18%","up"],
-            ["Net","₹2,78,500","+22%","up"],
-            ["Payroll due","₹84,000","Nov 30","flat"],
-          ].map(([k,v,d,dir]) => (
-            <div key={k} className="rounded-xl border border-border bg-card p-4 card-soft">
-              <div className="text-xs text-muted-foreground">{k}</div>
-              <div className="mt-1 text-lg font-semibold">{v}</div>
-              <div className={`text-xs mt-0.5 flex items-center gap-1 ${dir==="up"?"text-success":dir==="down"?"text-destructive":"text-muted-foreground"}`}>
-                {dir==="up" && <TrendingUp className="h-3 w-3" />} {dir==="down" && <TrendingDown className="h-3 w-3" />} {d}
-              </div>
-            </div>
-          ))}
-        </div>
+    const { getToken } = useAuth();
+    const [expenses, setExpenses] = useState<any[]>([]);
+    const [bankStatus, setBankStatus] = useState<any>(null);
 
-        <div className="rounded-xl border border-border bg-card card-soft overflow-hidden">
-          <div className="px-5 h-12 flex items-center justify-between border-b border-border">
-            <div className="text-sm font-semibold">Ledger</div>
-            <div className="flex gap-1 text-xs">
-              {["All","Operations","Payroll","F&B","Utilities","Revenue"].map((t,i)=>(
-                <button key={t} className={`px-2.5 py-1 rounded-md ${i===0?"bg-foreground text-background":"text-muted-foreground hover:bg-muted"}`}>{t}</button>
-              ))}
+    const fetchData = async () => {
+        try {
+            const headers = await getAuthHeaders(getToken);
+            const [expRes, bankRes] = await Promise.all([
+                fetch(`${API_URL}/expenses`, { headers }),
+                fetch(`${API_URL}/expenses/bank/status`, { headers })
+            ]);
+            setExpenses(await expRes.json());
+            setBankStatus(await bankRes.json());
+        } catch (err) {
+            console.error("Error fetching ledger data:", err);
+        }
+    };
+
+    useEffect(() => { fetchData(); }, [getToken]);
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this entry?")) return;
+        try {
+            const headers = await getAuthHeaders(getToken);
+            await fetch(`${API_URL}/expenses/${id}`, { method: "DELETE", headers });
+            fetchData();
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const bankExp = expenses.filter(e => e.type === "Bank");
+    const generalExp = expenses.filter(e => e.type === "General");
+    const monthlyExp = expenses.filter(e => e.type === "Monthly");
+
+    return (
+        <>
+            <Topbar
+                title="Expenses & Ledger"
+                subtitle="Manage your daily expense bank, fixed monthly overheads, and general costs."
+                action={<LogExpenseModal onSave={fetchData} />}
+            />
+            <div className="p-6 lg:p-8 space-y-6">
+                
+                {bankStatus && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="rounded-xl border border-border bg-card p-5 card-soft">
+                            <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Wallet className="h-3 w-3" /> Running Bank Balance</div>
+                            <div className={`mt-2 text-3xl font-bold tracking-tight ${bankStatus.currentBalance < 0 ? "text-destructive" : "text-primary"}`}>
+                                ₹{bankStatus.currentBalance}
+                            </div>
+                            <div className="text-xs mt-1 text-muted-foreground">Rolling forward automatically</div>
+                        </div>
+                        <div className="rounded-xl border border-border bg-card p-5 card-soft">
+                            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Budget Allocated</div>
+                            <div className="mt-2 text-2xl font-semibold">₹{bankStatus.allocatedBudget}</div>
+                            <div className="text-xs mt-1 text-muted-foreground">₹{bankStatus.dailyBudget}/day for {bankStatus.daysActive} days</div>
+                        </div>
+                        <div className="rounded-xl border border-border bg-card p-5 card-soft">
+                            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Deductions</div>
+                            <div className="mt-2 text-2xl font-semibold text-rose-500">₹{bankStatus.deductions}</div>
+                            <div className="text-xs mt-1 text-muted-foreground flex items-center gap-1"><TrendingDown className="h-3 w-3" /> Expenses paid</div>
+                        </div>
+                        <div className="rounded-xl border border-border bg-card p-5 card-soft">
+                            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Add-on Deposits</div>
+                            <div className="mt-2 text-2xl font-semibold text-emerald-500">₹{bankStatus.deposits}</div>
+                            <div className="text-xs mt-1 text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Cash added to bank</div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="rounded-xl border border-border bg-card card-soft overflow-hidden p-1">
+                    <Tabs defaultValue="bank" className="w-full">
+                        <div className="px-5 pt-3 pb-2 border-b border-border">
+                            <TabsList className="bg-transparent space-x-2">
+                                <TabsTrigger value="bank" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-4">Expense Bank Ledger</TabsTrigger>
+                                <TabsTrigger value="general" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-4">General Log</TabsTrigger>
+                                <TabsTrigger value="monthly" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-4">Monthly/Fixed Log</TabsTrigger>
+                            </TabsList>
+                        </div>
+                        
+                        <TabsContent value="bank" className="m-0">
+                            <ExpenseTable data={bankExp} onDelete={handleDelete} showCategory={true} />
+                        </TabsContent>
+                        <TabsContent value="general" className="m-0">
+                            <ExpenseTable data={generalExp} onDelete={handleDelete} />
+                        </TabsContent>
+                        <TabsContent value="monthly" className="m-0">
+                            <ExpenseTable data={monthlyExp} onDelete={handleDelete} />
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="text-xs text-muted-foreground bg-muted/40">
-              <tr>{["Date","Description","Category","Amount"].map(h=><th key={h} className="text-left font-medium px-5 py-2.5">{h}</th>)}</tr>
-            </thead>
-            <tbody>
-              {ledger.map((r,i) => (
-                <tr key={i} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-5 py-3 text-muted-foreground">{r[0]}</td>
-                  <td className="px-5 py-3 font-medium">{r[1]}</td>
-                  <td className="px-5 py-3">
-                    <span className="text-xs px-2 py-1 rounded-md bg-muted text-muted-foreground">{r[2]}</span>
-                  </td>
-                  <td className={`px-5 py-3 font-medium ${r[4]==="in"?"text-success":"text-foreground"}`}>
-                    {r[4]==="in" ? "+" : "−"} {r[3]}
-                  </td>
+        </>
+    );
+}
+
+function ExpenseTable({ data, onDelete, showCategory = false }: { data: any[], onDelete: (id: string) => void, showCategory?: boolean }) {
+    if (data.length === 0) return <div className="p-8 text-center text-muted-foreground text-sm">No expenses logged yet.</div>;
+    return (
+        <table className="w-full text-sm">
+            <thead className="text-xs text-muted-foreground bg-muted/20">
+                <tr>
+                    <th className="text-left font-medium px-6 py-3">Date</th>
+                    <th className="text-left font-medium px-6 py-3">Description</th>
+                    {showCategory && <th className="text-left font-medium px-6 py-3">Type</th>}
+                    <th className="text-right font-medium px-6 py-3">Amount</th>
+                    <th className="w-10"></th>
                 </tr>
-              ))}
+            </thead>
+            <tbody className="divide-y divide-border">
+                {data.map((r) => (
+                    <tr key={r._id} className="hover:bg-muted/10 group">
+                        <td className="px-6 py-3 text-muted-foreground whitespace-nowrap">{new Date(r.date).toLocaleDateString()}</td>
+                        <td className="px-6 py-3 font-medium">{r.description}</td>
+                        {showCategory && (
+                            <td className="px-6 py-3">
+                                <span className={`text-xs px-2 py-1 rounded-md font-medium ${r.category === "Deposit" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+                                    {r.category}
+                                </span>
+                            </td>
+                        )}
+                        <td className={`px-6 py-3 font-bold text-right ${r.category === "Deposit" ? "text-emerald-500" : "text-foreground"}`}>
+                            {r.category === "Deposit" ? "+" : ""}₹{r.amount}
+                        </td>
+                        <td className="px-6 py-3 text-right">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onDelete(r._id)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </td>
+                    </tr>
+                ))}
             </tbody>
-          </table>
-        </div>
-      </div>
-    </>
-  );
+        </table>
+    );
 }

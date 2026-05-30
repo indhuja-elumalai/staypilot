@@ -8,6 +8,7 @@ import bookingRoutes from './routes/bookings.ts';
 import settingsRoutes from './routes/settings.ts';
 import customerRoutes from './routes/customers.ts';
 import operationRoutes from './routes/operations.ts';
+import expensesRoutes from './routes/expenses.ts';
 import { getAuth } from '@clerk/express';
 
 const app = express();
@@ -75,6 +76,7 @@ app.use('/api/bookings', async (req, res, next) => {
 app.use('/api/settings', settingsRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/operations', operationRoutes);
+app.use('/api/expenses', expensesRoutes);
 
 app.use(express.static('public'));
 app.get('/', (req, res) => {
