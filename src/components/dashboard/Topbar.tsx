@@ -1,9 +1,10 @@
-import { Search, Bell, Settings as SettingsIcon } from "lucide-react";
+import { Search, Bell, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
+import { UserButton } from "@clerk/clerk-react";
 import { NewBookingModal } from "./NewBookingModal";
 
-export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
+export function Topbar({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
     <header className="h-16 px-6 lg:px-8 border-b border-border bg-card flex items-center justify-between">
       <div>
@@ -16,17 +17,21 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
           <input placeholder="Search..." className="bg-transparent text-sm outline-none flex-1" />
         </div>
 
-        <Button variant="ghost" asChild>
-          <Link to="/dashboard/settings">
-            <SettingsIcon className="h-4 w-4 mr-2" /> Template
+
+
+        {action !== undefined ? action : <NewBookingModal />}
+
+        <Button variant="ghost" size="icon" asChild className="relative ml-2">
+          <Link to="/">
+            <Home className="h-4 w-4" />
           </Link>
         </Button>
 
-        <NewBookingModal /> {/* This now handles its own Dialog trigger */}
-
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative mr-2">
           <Bell className="h-4 w-4" />
         </Button>
+        
+        <UserButton afterSignOutUrl="/" />
       </div>
     </header>
   );

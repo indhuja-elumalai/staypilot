@@ -16,11 +16,11 @@ router.post('/', async (req, res) => {
         if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
         const db = getDb();
-        const { name, address, phone, terms } = req.body;
+        const { name, address, phone, terms, email, companyGst, inventory, totalRooms } = req.body;
 
         await db.collection("settings").updateOne(
             { userId },
-            { $set: { name, address, phone, terms, userId, updatedAt: new Date() } },
+            { $set: { name, address, phone, terms, email, companyGst, inventory, totalRooms, userId, updatedAt: new Date() } },
             { upsert: true }
         );
 
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
         // Look up by userId directly from Clerk session
         const settings = await db.collection("settings").findOne({ userId });
 
-        res.status(200).json(settings || { name: "", address: "", phone: "", terms: "" });
+        res.status(200).json(settings || { name: "", address: "", phone: "", terms: "", email: "", companyGst: "", inventory: [], totalRooms: 0 });
     } catch (error) {
         console.error("SETTINGS_GET_ERROR:", error);
         res.status(500).json({ error: "Failed to fetch settings" });
